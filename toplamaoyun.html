@@ -1,34 +1,109 @@
 <!DOCTYPE html>
-<html>
+<html lang="tr">
 <head>
-    <title>Zihinden Toplama Oyunu</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Toplama Oyunu</title>
+    <style>
+        body { text-align: center; font-family: Arial, sans-serif; background-color: #ffebcd; }
+        .container { margin-top: 20px; }
+        .button { font-size: 24px; padding: 10px; margin: 10px; cursor: pointer; border-radius: 10px; border: none; }
+        #question { font-size: 32px; margin: 20px; color: #ff4500; font-weight: bold; }
+        #choices button { font-size: 24px; padding: 15px; margin: 5px; background-color: #87ceeb; border: none; border-radius: 10px; cursor: pointer; }
+        #choices button:hover { background-color: #4682b4; color: white; }
+        #timer, #score { font-size: 22px; margin-top: 10px; color: #2e8b57; font-weight: bold; }
+        h1 { color: #ff6347; }
+        label { font-size: 20px; font-weight: bold; color: #8b0000; }
+        button { background-color: #32cd32; color: white; }
+        button:hover { background-color: #228b22; }
+    </style>
+</head>
+<body>
+    <h1>Toplama Oyunu</h1>
+    <div>
+        <label>Toplanacak Sayıları Seç:</label>
+        <input type="checkbox" value="6">6
+        <input type="checkbox" value="7">7
+        <input type="checkbox" value="8">8
+        <input type="checkbox" value="9">9
+        <input type="checkbox" value="10">10
+        <button onclick="startGame()">Başlat</button>
+    </div>
+    <div id="game" class="container" style="display:none;">
+        <div id="timer">Süre: 60</div>
+        <div id="score">Puan: 0</div>
+        <div id="question"></div>
+        <div id="choices"></div>
+    </div>
+    <audio id="correctSound" src="https://www.fesliyanstudios.com/play-mp3/438" preload="auto"></audio>
+    <audio id="wrongSound" src="https://www.fesliyanstudios.com/play-mp3/436" preload="auto"></audio>
     <script>
-        function yeniSoru() {
-            let num1 = Math.random() < 0.5 ? 9 : 10;
-            let num2 = Math.floor(Math.random() * 10);
-            document.getElementById("soru").innerText = num1 + " + " + num2 + " = ?";
-            document.getElementById("cevap").value = "";
-            document.getElementById("dogruCevap").value = num1 + num2;
+        let selectedNumbers = [];
+        let score = 0;
+        let timeLeft = 60;
+        let timer;
+
+        function startGame() {
+            selectedNumbers = Array.from(document.querySelectorAll('input[type=checkbox]:checked'))
+                .map(input => parseInt(input.value));
+            if (selectedNumbers.length === 0) {
+                alert("Lütfen en az bir sayı seçin!");
+                return;
+            }
+            document.getElementById("game").style.display = "block";
+            score = 0;
+            timeLeft = 60;
+            updateScore();
+            startTimer();
+            generateQuestion();
         }
 
-        function kontrolEt() {
-            let girilenCevap = document.getElementById("cevap").value;
-            let dogruCevap = document.getElementById("dogruCevap").value;
-            
-            if (girilenCevap == dogruCevap) {
-                alert("Tebrikler! Doğru cevap.");
-            } else {
-                alert("Yanlış! Doğru cevap: " + dogruCevap);
+        function startTimer() {
+            timer = setInterval(() => {
+                timeLeft--;
+                document.getElementById("timer").innerText = `Süre: ${timeLeft}`;
+                if (timeLeft <= 0) {
+                    clearInterval(timer);
+                    alert(`Süre bitti! Toplam Puanınız: ${score}`);
+                }
+            }, 1000);
+        }
+
+        function generateQuestion() {
+            let num1 = selectedNumbers[Math.floor(Math.random() * selectedNumbers.length)];
+            let num2 = Math.floor(Math.random() * 9) + 1;
+            let correctAnswer = num1 + num2;
+            let choices = new Set([correctAnswer]);
+            while (choices.size < 3) {
+                choices.add(correctAnswer + (Math.random() < 0.5 ? 1 : -1) * (Math.floor(Math.random() * 3) + 1));
             }
-            yeniSoru();
+            choices = Array.from(choices).sort(() => Math.random() - 0.5);
+            
+            document.getElementById("question").innerText = `${num1} + ${num2} = ?`;
+            document.getElementById("choices").innerHTML = "";
+            choices.forEach(choice => {
+                let button = document.createElement("button");
+                button.innerText = choice;
+                button.className = "button";
+                button.onclick = () => checkAnswer(choice, correctAnswer);
+                document.getElementById("choices").appendChild(button);
+            });
+        }
+
+        function checkAnswer(selected, correct) {
+            if (selected === correct) {
+                score++;
+                document.getElementById("correctSound").play();
+            } else {
+                document.getElementById("wrongSound").play();
+            }
+            updateScore();
+            generateQuestion();
+        }
+
+        function updateScore() {
+            document.getElementById("score").innerText = `Puan: ${score}`;
         }
     </script>
-</head>
-<body onload="yeniSoru()">
-    <h2>Zihinden Toplama Oyunu</h2>
-    <p id="soru"></p>
-    <input type="number" id="cevap">
-    <input type="hidden" id="dogruCevap">
-    <button onclick="kontrolEt()">Cevabı Kontrol Et</button>
 </body>
 </html>
